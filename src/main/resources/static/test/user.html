@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>User CRUD</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <h1>User Management</h1>
+
+    <h2>All Users</h2>
+    <table border="1">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Account</th>
+                <th>Email</th>
+                <th>Phone</th>
+                <th>Role</th>
+                <th>Created At</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody id="userTable">
+            <!-- User data will be appended here -->
+        </tbody>
+    </table>
+
+    <h2>Create User</h2>
+    <form id="createUserForm">
+        Account: <input type="text" id="account" required><br>
+        Password: <input type="password" id="password" required><br>
+        Email: <input type="email" id="email" required><br>
+        Phone: <input type="text" id="phone"><br>
+        Role: <input type="text" id="role" value="會員"><br>
+        <button type="submit">Create</button>
+    </form>
+
+    <h2>Update User</h2>
+    <form id="updateUserForm">
+        User ID: <input type="number" id="updateUserId" required readonly><br>
+        Account: <input type="text" id="updateAccount"><br>
+        Password: <input type="password" id="updatePassword"><br>
+        Email: <input type="email" id="updateEmail"><br>
+        Phone: <input type="text" id="updatePhone"><br>
+        Role: <input type="text" id="updateRole"><br>
+        <button type="submit">Update</button>
+    </form>
+
+    <h2>Delete User</h2>
+    <form id="deleteUserForm">
+        User ID: <input type="number" id="deleteUserId" required><br>
+        <button type="submit">Delete</button>
+    </form>
+
+    <script>
+        $(document).ready(function() {
+            loadUsers();
+
+            // Load all users
+            function loadUsers() {
+                $.ajax({
+                    type: "GET",
+                    url: "/users",
+                    success: function(response) {
+                        let userTable = $("#userTable");
+                        userTable.empty();
+                        response.forEach(user => {
+                            userTable.append(`
+                                <tr>
+                                    <td>${user.userId}</td>
+                                    <td>${user.account}</td>
+                                    <td>${user.email}</td>
+                                    <td>${user.phone}</td>
+                                    <td>${user.role}</td>
+                                    <td>${user.createdAt}</td>
+                                    <td>
+                                        <button onclick="editUser(${user.userId})">Edit</button>
+                                    </td>
+                                </tr>
+                            `);
+                        });
+                    }
+                });
+            }
+
+            // Create User
+            $("#createUserForm").submit(function(event) {
+                event.preventDefault();
+                const user = {
+                    account: $("#account").val(),
+                    password: $("#password").val(),
+                    email: $("#email").val(),
+                    phone: $("#phone").val(),
+                    role: $("#role").val()
+                };
+                $.ajax({
+                    type: "POST",
+                    url: "/users",
+                    contentType: "application/json",
+                    data: JSON.stringify(user),
+                    success: function(response) {
+                        alert("User created successfully!");
+                        loadUsers();
+                    }
+                });
+            });
+
+            // Update User
+            $("#updateUserForm").submit(function(event) {
+                event.preventDefault();
+                const userId = $("#updateUserId").val();
+                const user = {
+                    account: $("#updateAccount").val(),
+                    password: $("#updatePassword").val(),
+                    email: $("#updateEmail").val(),
+                    phone: $("#updatePhone").val(),
+                    role: $("#updateRole").val()
+                };
+                $.ajax({
+                    type: "PUT",
+                    url: "/users/" + userId,
+                    contentType: "application/json",
+                    data: JSON.stringify(user),
+                    success: function(response) {
+                        alert("User updated successfully!");
+                        loadUsers();
+                    }
+                });
+            });
+
+            // Delete User
+            $("#deleteUserForm").submit(function(event) {
+                event.preventDefault();
+                const userId = $("#deleteUserId").val();
+                $.ajax({
+                    type: "DELETE",
+                    url: "/users/" + userId,
+                    success: function(response) {
+                        alert("User deleted successfully!");
+                        loadUsers();
+                    }
+                });
+            });
+        });
+
+        function editUser(userId) {
+            $.ajax({
+                type: "GET",
+                url: "/users/" + userId,
+                success: function(response) {
+                    $("#updateUserId").val(response.userId);
+                    $("#updateAccount").val(response.account);
+                    $("#updatePassword").val(response.password);
+                    $("#updateEmail").val(response.email);
+                    $("#updatePhone").val(response.phone);
+                    $("#updateRole").val(response.role);
+                }
+            });
+        }
+    </script>
+</body>
+</html>

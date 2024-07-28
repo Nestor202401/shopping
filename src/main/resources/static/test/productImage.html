@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Product Image Management</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        function fetchImages() {
+            $.ajax({
+                url: '/api/images',
+                method: 'GET',
+                success: function(images) {
+                    const imageList = $('#imageList');
+                    imageList.empty();
+                    images.forEach(image => {
+                        const listItem = $(`
+                            <li>
+                                <img src="${image.imageUrl}" alt="Image" width="100" />
+                                <p>ID: ${image.imageId}</p>
+                                <p>URL: ${image.imageUrl}</p>
+                                <p>Product ID: ${image.productId}</p>
+                                <p>Cover: ${image.cover}</p>
+                                <p>Deleted: ${image.deleted}</p>
+                                <button onclick="editImage(${image.imageId})">Edit</button>
+                            </li>
+                        `);
+                        imageList.append(listItem);
+                    });
+                }
+            });
+        }
+
+        function addImage() {
+            const file = $('#fileInput')[0].files[0];
+            const productId = $('#productId').val();
+            const cover = $('#cover').is(':checked');
+            const deleted = $('#deleted').is(':checked');
+
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('image', new Blob([JSON.stringify({ productId, cover, deleted })], { type: 'application/json' }));
+
+            $.ajax({
+                url: '/api/images',
+                method: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function(result) {
+                    console.log('Added Image:', result);
+                    fetchImages();
+                }
+            });
+        }
+
+        function editImage(id) {
+            $.ajax({
+                url: `/api/images/${id}`,
+                method: 'GET',
+                success: function(image) {
+                    $('#updateId').val(image.imageId);
+                    $('#updateProductId').val(image.productId);
+                    $('#updateCover').prop('checked', image.cover);
+                    $('#updateDeleted').prop('checked', image.deleted);
+                }
+            });
+        }
+
+        function updateImage() {
+            const id = $('#updateId').val();
+            const file = $('#updateFileInput')[0].files[0];
+            const productId = $('#updateProductId').val();
+            const cover = $('#updateCover').is(':checked');
+            const deleted = $('#updateDeleted').is(':checked');
+
+            const formData = new FormData();
+            if (file) {
+                formData.append('file', file);
+            }
+            formData.append('image', new Blob([JSON.stringify({ productId, cover, deleted })], { type: 'application/json' }));
+
+            $.ajax({
+                url: `/api/images/${id}`,
+                method: 'PUT',
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function(result) {
+                    console.log('Updated Image:', result);
+                    fetchImages();
+                }
+            });
+        }
+
+        function deleteImage() {
+            const id = $('#deleteId').val();
+
+            $.ajax({
+                url: `/api/images/${id}`,
+                method: 'DELETE',
+                success: function() {
+                    console.log(`Deleted Image with ID: ${id}`);
+                    fetchImages();
+                }
+            });
+        }
+
+        $(document).ready(function() {
+            fetchImages();
+        });
+    </script>
+</head>
+<body>
+    <h1>Product Image Management</h1>
+
+    <h2>All Images</h2>
+    <ul id="imageList"></ul>
+
+    <h2>Add Image</h2>
+    <input type="file" id="fileInput" required /><br>
+    Product ID: <input type="number" id="productId" required /><br>
+    Cover: <input type="checkbox" id="cover" /><br>
+    Deleted: <input type="checkbox" id="deleted" /><br>
+    <button onclick="addImage()">Add Image</button>
+
+    <h2>Update Image</h2>
+    Image ID: <input type="number" id="updateId" readonly /><br>
+    <input type="file" id="updateFileInput" /><br>
+    Product ID: <input type="number" id="updateProductId" required /><br>
+    Cover: <input type="checkbox" id="updateCover" /><br>
+    Deleted: <input type="checkbox" id="updateDeleted" /><br>
+    <button onclick="updateImage()">Update Image</button>
+
+    <h2>Delete Image</h2>
+    Image ID: <input type="number" id="deleteId" required /><br>
+    <button onclick="deleteImage()">Delete Image</button>
+</body>
+</html>

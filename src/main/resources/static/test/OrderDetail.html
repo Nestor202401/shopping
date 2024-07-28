@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Order Detail CRUD</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <h1>Order Detail Management</h1>
+
+    <h2>All Order Details</h2>
+    <table border="1">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Order ID</th>
+                <th>Product ID</th>
+                <th>Quantity</th>
+                <th>Price</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody id="orderDetailTable">
+            <!-- Order Detail data will be appended here -->
+        </tbody>
+    </table>
+
+    <h2>Create Order Detail</h2>
+    <form id="createOrderDetailForm">
+        Order ID: <input type="number" id="orderId" required><br>
+        Product ID: <input type="number" id="productId" required><br>
+        Quantity: <input type="number" id="quantity" required><br>
+        Price: <input type="number" id="price" required><br>
+        <button type="submit">Create</button>
+    </form>
+
+    <h2>Update Order Detail</h2>
+    <form id="updateOrderDetailForm">
+        Order Detail ID: <input type="number" id="updateOrderDetailId" required readonly><br>
+        Quantity: <input type="number" id="updateQuantity"><br>
+        Price: <input type="number" id="updatePrice"><br>
+        <button type="submit">Update</button>
+    </form>
+
+    <h2>Delete Order Detail</h2>
+    <form id="deleteOrderDetailForm">
+        Order Detail ID: <input type="number" id="deleteOrderDetailId" required><br>
+        <button type="submit">Delete</button>
+    </form>
+
+    <script>
+        $(document).ready(function() {
+            loadOrderDetails();
+
+            // Load all order details
+            function loadOrderDetails() {
+                $.ajax({
+                    type: "GET",
+                    url: "/order-details",
+                    success: function(response) {
+                        let orderDetailTable = $("#orderDetailTable");
+                        orderDetailTable.empty();
+                        response.forEach(orderDetail => {
+                            orderDetailTable.append(`
+                                <tr>
+                                    <td>${orderDetail.orderDetailId}</td>
+                                    <td>${orderDetail.order.orderId}</td>
+                                    <td>${orderDetail.productId}</td>
+                                    <td>${orderDetail.quantity}</td>
+                                    <td>${orderDetail.price}</td>
+                                    <td>
+                                        <button onclick="editOrderDetail(${orderDetail.orderDetailId})">Edit</button>
+                                    </td>
+                                </tr>
+                            `);
+                        });
+                    }
+                });
+            }
+
+            // Create Order Detail
+            $("#createOrderDetailForm").submit(function(event) {
+                event.preventDefault();
+                const orderDetail = {
+                    order: { orderId: $("#orderId").val() },
+                    productId: $("#productId").val(),
+                    quantity: $("#quantity").val(),
+                    price: $("#price").val()
+                };
+                $.ajax({
+                    type: "POST",
+                    url: "/order-details",
+                    contentType: "application/json",
+                    data: JSON.stringify(orderDetail),
+                    success: function(response) {
+                        alert("Order detail created successfully!");
+                        loadOrderDetails();
+                    }
+                });
+            });
+
+            // Update Order Detail
+            $("#updateOrderDetailForm").submit(function(event) {
+                event.preventDefault();
+                const orderDetailId = $("#updateOrderDetailId").val();
+                const orderDetail = {
+                    quantity: $("#updateQuantity").val(),
+                    price: $("#updatePrice").val()
+                };
+                $.ajax({
+                    type: "PUT",
+                    url: "/order-details/" + orderDetailId,
+                    contentType: "application/json",
+                    data: JSON.stringify(orderDetail),
+                    success: function(response) {
+                        alert("Order detail updated successfully!");
+                        loadOrderDetails();
+                    }
+                });
+            });
+
+            // Delete Order Detail
+            $("#deleteOrderDetailForm").submit(function(event) {
+                event.preventDefault();
+                const orderDetailId = $("#deleteOrderDetailId").val();
+                $.ajax({
+                    type: "DELETE",
+                    url: "/order-details/" + orderDetailId,
+                    success: function(response) {
+                        alert("Order detail deleted successfully!");
+                        loadOrderDetails();
+                    }
+                });
+            });
+        });
+
+        function editOrderDetail(orderDetailId) {
+            $.ajax({
+                type: "GET",
+                url: "/order-details/" + orderDetailId,
+                success: function(response) {
+                    $("#updateOrderDetailId").val(response.orderDetailId);
+                    $("#updateQuantity").val(response.quantity);
+                    $("#updatePrice").val(response.price);
+                }
+            });
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Appliances Management</title>
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/jquery.dataTables.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+</head>
+<body>
+    <h1>Appliances Management</h1>
+    <button id="addApplianceButton">Add Appliance</button>
+    <div id="applianceFormContainer" style="display: none;">
+        <h2 id="formTitle">Add Appliance</h2>
+        <form id="applianceForm">
+            <input type="hidden" id="productId">
+            <label for="name">Name:</label>
+            <input type="text" id="name" name="name" required><br>
+            <label for="brand">Brand:</label>
+            <input type="text" id="brand" name="brand" required><br>
+            <label for="price">Price:</label>
+            <input type="number" id="price" name="price" required><br>
+            <label for="category">Category:</label>
+            <input type="text" id="category" name="category" required><br>
+            <label for="stock">Stock:</label>
+            <input type="number" id="stock" name="stock" required><br>
+            <label for="description">Description:</label>
+            <input type="text" id="description" name="description" required><br>
+            <label for="power">Power:</label>
+            <input type="text" id="power" name="power" required><br>
+            <label for="voltage">Voltage:</label>
+            <input type="text" id="voltage" name="voltage" required><br>
+            <button type="submit" id="saveButton">Save</button>
+            <button type="button" id="cancelButton">Cancel</button>
+        </form>
+    </div>
+    <table id="appliancesTable" class="display">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Brand</th>
+                <th>Price</th>
+                <th>Category</th>
+                <th>Stock</th>
+                <th>Description</th>
+                <th>Power</th>
+                <th>Voltage</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+    <script>
+        $(document).ready(function() {
+            const table = $('#appliancesTable').DataTable({
+                drawCallback: function() {
+                    $('.delete-button').on('click', function() {
+                        const id = $(this).data('id');
+                        $.ajax({
+                            url: `/api/appliances/${id}`,
+                            method: 'DELETE',
+                            success: function() {
+                                fetchAppliances();
+                            },
+                            error: function(xhr, status, error) {
+                                alert('Error: ' + xhr.responseText);
+                            }
+                        });
+                    });
+
+                    $('.edit-button').on('click', function() {
+                        const id = $(this).data('id');
+                        $.ajax({
+                            url: `/api/appliances/${id}`,
+                            method: 'GET',
+                            success: function(appliance) {
+                                $('#formTitle').text('Edit Appliance');
+                                $('#productId').val(appliance.productId);
+                                $('#name').val(appliance.name);
+                                $('#brand').val(appliance.brand);
+                                $('#price').val(appliance.price);
+                                $('#category').val(appliance.category);
+                                $('#stock').val(appliance.stock);
+                                $('#description').val(appliance.description);
+                                $('#power').val(appliance.power);
+                                $('#voltage').val(appliance.voltage);
+                                $('#applianceFormContainer').show();
+                            },
+                            error: function(xhr, status, error) {
+                                alert('Error: ' + xhr.responseText);
+                            }
+                        });
+                    });
+                }
+            });
+
+            $('#addApplianceButton').on('click', function() {
+                $('#formTitle').text('Add Appliance');
+                $('#applianceForm')[0].reset();
+                $('#productId').val('');
+                $('#applianceFormContainer').show();
+            });
+
+            $('#cancelButton').on('click', function() {
+                $('#applianceFormContainer').hide();
+            });
+
+            $('#applianceForm').on('submit', function(event) {
+                event.preventDefault();
+                const productId = $('#productId').val();
+                const method = productId ? 'PUT' : 'POST';
+                const url = productId ? `/api/appliances/${productId}` : '/api/appliances';
+                const applianceData = {
+                    name: $('#name').val(),
+                    brand: $('#brand').val(),
+                    price: $('#price').val(),
+                    category: $('#category').val(),
+                    stock: $('#stock').val(),
+                    description: $('#description').val(),
+                    power: $('#power').val(),
+                    voltage: $('#voltage').val()
+                };
+
+                $.ajax({
+                    url: url,
+                    method: method,
+                    contentType: 'application/json',
+                    data: JSON.stringify(applianceData),
+                    success: function() {
+                        $('#applianceFormContainer').hide();
+                        fetchAppliances();
+                    },
+                    error: function(xhr, status, error) {
+                        alert('Error: ' + xhr.responseText);
+                    }
+                });
+            });
+
+            function fetchAppliances() {
+                $.ajax({
+                    url: '/api/appliances',
+                    method: 'GET',
+                    dataType: 'json',
+                    success: function(appliances) {
+                        table.clear();
+                        appliances.forEach(appliance => {
+                            table.row.add([
+                                appliance.name,
+                                appliance.brand,
+                                appliance.price,
+                                appliance.category,
+                                appliance.stock,
+                                appliance.description,
+                                appliance.power,
+                                appliance.voltage,
+                                `<button class="edit-button" data-id="${appliance.productId}">Edit</button>
+                                 <button class="delete-button" data-id="${appliance.productId}">Delete</button>`
+                            ]);
+                        });
+                        table.draw();
+                    }
+                });
+            }
+
+            fetchAppliances();
+        });
+    </script>
+</body>
+</html>

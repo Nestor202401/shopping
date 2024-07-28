@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>產品管理</title>
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/jquery.dataTables.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+</head>
+<body>
+    <h1>產品管理</h1>
+    <button id="addElectronicsButton">新增產品</button>
+    <div id="electronicsFormContainer" style="display: none;">
+        <h2 id="formTitle">新增產品</h2>
+        <form id="electronicsForm">
+            <input type="hidden" id="electronicsId">
+            <label for="name">名稱:</label>
+            <input type="text" id="name" name="name" required><br>
+            <label for="brand">品牌:</label>
+            <input type="text" id="brand" name="brand" required><br>
+            <label for="price">價格:</label>
+            <input type="number" id="price" name="price" required><br>
+            <label for="category">類別:</label>
+            <input type="text" id="category" name="category" required><br>
+            <label for="stock">庫存:</label>
+            <input type="number" id="stock" name="stock" required><br>
+            <label for="description">描述:</label>
+            <input type="text" id="description" name="description" required><br>
+            <label for="color">顏色:</label>
+            <input type="text" id="color" name="color" required><br>
+            <label for="specifications">規格:</label>
+            <input type="text" id="specifications" name="specifications" required><br>
+            <button type="submit" id="saveButton">儲存</button>
+            <button type="button" id="cancelButton">取消</button>
+        </form>
+    </div>
+    <table id="electronicsTable" class="display">
+        <thead>
+            <tr>
+                <th>名稱</th>
+                <th>品牌</th>
+                <th>價格</th>
+                <th>類別</th>
+                <th>庫存</th>
+                <th>描述</th>
+                <th>顏色</th>
+                <th>規格</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+    <script>
+        $(document).ready(function() {
+            const table = $('#electronicsTable').DataTable({
+                drawCallback: function() {
+                    $('.delete-button').on('click', function() {
+                        const id = $(this).data('id');
+                        $.ajax({
+                            url: `/api/electronics/${id}`,
+                            method: 'DELETE',
+                            success: function() {
+                                fetchElectronics();
+                            },
+                            error: function(xhr, status, error) {
+                                alert('Error: ' + xhr.responseText);
+                            }
+                        });
+                    });
+
+                    $('.edit-button').on('click', function() {
+                        const id = $(this).data('id');
+                        $.ajax({
+                            url: `/api/electronics/${id}`,
+                            method: 'GET',
+                            success: function(electronics) {
+                                $('#formTitle').text('編輯產品');
+                                $('#electronicsId').val(electronics.electronicsId);
+                                $('#name').val(electronics.name);
+                                $('#brand').val(electronics.brand);
+                                $('#price').val(electronics.price);
+                                $('#category').val(electronics.category);
+                                $('#stock').val(electronics.stock);
+                                $('#description').val(electronics.description);
+                                $('#color').val(electronics.color);
+                                $('#specifications').val(electronics.specifications);
+                                $('#electronicsFormContainer').show();
+                            },
+                            error: function(xhr, status, error) {
+                                alert('Error: ' + xhr.responseText);
+                            }
+                        });
+                    });
+                }
+            });
+
+            $('#addElectronicsButton').on('click', function() {
+                $('#formTitle').text('新增產品');
+                $('#electronicsForm')[0].reset();
+                $('#electronicsId').val('');
+                $('#electronicsFormContainer').show();
+            });
+
+            $('#cancelButton').on('click', function() {
+                $('#electronicsFormContainer').hide();
+            });
+
+            $('#electronicsForm').on('submit', function(event) {
+                event.preventDefault();
+                const electronicsId = $('#electronicsId').val();
+                const method = electronicsId ? 'PUT' : 'POST';
+                const url = electronicsId ? `/api/electronics/${electronicsId}` : '/api/electronics';
+                const electronicsData = {
+                    name: $('#name').val(),
+                    brand: $('#brand').val(),
+                    price: $('#price').val(),
+                    category: $('#category').val(),
+                    stock: $('#stock').val(),
+                    description: $('#description').val(),
+                    color: $('#color').val(),
+                    specifications: $('#specifications').val()
+                };
+
+                $.ajax({
+                    url: url,
+                    method: method,
+                    contentType: 'application/json',
+                    data: JSON.stringify(electronicsData),
+                    success: function() {
+                        $('#electronicsFormContainer').hide();
+                        fetchElectronics();
+                    },
+                    error: function(xhr, status, error) {
+                        alert('Error: ' + xhr.responseText);
+                    }
+                });
+            });
+
+            function fetchElectronics() {
+                $.ajax({
+                    url: '/api/electronics',
+                    method: 'GET',
+                    dataType: 'json',
+                    success: function(electronics) {
+                        table.clear();
+                        electronics.forEach(electronic => {
+                            table.row.add([
+                                electronic.name,
+                                electronic.brand,
+                                electronic.price,
+                                electronic.category,
+                                electronic.stock,
+                                electronic.description,
+                                electronic.color,
+                                electronic.specifications,
+                                `<button class="edit-button" data-id="${electronic.productId}">編輯</button>
+                                 <button class="delete-button" data-id="${electronic.productId}">刪除</button>`
+                            ]);
+                        });
+                        table.draw();
+                    }
+                });
+            }
+
+            fetchElectronics();
+        });
+    </script>
+</body>
+</html>

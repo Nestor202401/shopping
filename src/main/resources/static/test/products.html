@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Products Management</title>
+</head>
+<body>
+    <h1>Products Management</h1>
+    <div id="products"></div>
+    <script>
+        async function fetchProducts() {
+            const response = await fetch('/api/products');
+            const products = await response.json();
+            const productsDiv = document.getElementById('products');
+            productsDiv.innerHTML = products.map(product => `
+                <div>
+                    <h3>${product.name}</h3>
+                    <p>Brand: ${product.brand}</p>
+                    <p>Price: ${product.price}</p>
+                    <p>Category: ${product.category}</p>
+                    <p>Stock: ${product.stock}</p>
+                    <p>Description: ${product.description}</p>
+                    <button onclick="deleteProduct(${product.productId})">Delete</button>
+                </div>
+            `).join('');
+        }
+
+        async function deleteProduct(id) {
+            await fetch(`/api/products/${id}`, { method: 'DELETE' });
+            fetchProducts();
+        }
+
+        fetchProducts();
+    </script>
+</body>
+</html>

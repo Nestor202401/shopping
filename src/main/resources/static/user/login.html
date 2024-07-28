@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>JWT Login and Order Test</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <h2>Login</h2>
+    <form id="loginForm">
+        <label for="account">Account:</label>
+        <input type="text" id="account" name="account"><br><br>
+        <label for="password">Password:</label>
+        <input type="password" id="password" name="password"><br><br>
+        <button type="submit">Login</button>
+    </form>
+
+    <p id="response"></p>
+
+    <h2>Stored Token</h2>
+    <p id="storedToken"></p>
+
+    <h2>Order Page</h2>
+    <p id="orderContent"></p>
+
+    <script>
+    $(document).ready(function () {
+        $('#loginForm').submit(function (event) {
+            event.preventDefault();
+            var formData = {
+                account: $('#account').val(),
+                password: $('#password').val()
+            };
+
+            $.ajax({
+                type: 'POST',
+                url: 'http://localhost:8080/users/login',
+                contentType: 'application/json',
+                data: JSON.stringify(formData),
+                success: function (data) {
+                    if (data.token) {
+                        localStorage.setItem('token', data.token); // 存儲 token
+                        $('#response').text('Login successful! Token: ' + data.token);
+                        console.log('Token stored, redirecting to Order.html'); // 添加 log
+                        window.location.href = "/test/Order.html"; // 成功登入後重定向到 Order.html
+                    } else {
+                        $('#response').text('Login failed: ' + data.message);
+                        console.log('Login failed: ' + data.message); // 添加 log
+                    }
+                },
+                error: function (error) {
+                    $('#response').text('Error: ' + error.responseText);
+                    console.log('Error: ' + error.responseText); // 添加 log
+                }
+            });
+        });
+
+        // 檢查並顯示已儲存的 token
+        function displayStoredToken() {
+            var token = localStorage.getItem('token');
+            console.log('Stored Token:', token); // 輸出到控制台
+            if (token) {
+                $('#storedToken').text('Stored Token: ' + token);
+            } else {
+                $('#storedToken').text('No token found');
+            }
+        }
+
+        // 頁面加載時顯示已儲存的 token
+        displayStoredToken();
+    });
+
+    </script>
+</body>
+</html>

@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>註冊 | 我們的網站</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #4a90e2;
+            --secondary-color: #f5a623;
+            --background-color: #f8f9fa;
+            --text-color: #333;
+            --error-color: #e74c3c;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .header {
+            background-color: var(--primary-color);
+            color: #fff;
+            text-align: center;
+            padding: 20px;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+
+        .form-container {
+            padding: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        .form-group i {
+            position: absolute;
+            top: 50%;
+            left: 10px;
+            transform: translateY(-50%);
+            color: #aaa;
+        }
+
+        input {
+            width: 100%;
+            padding: 10px 10px 10px 35px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: var(--primary-color);
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #3a7bd5;
+        }
+
+        .login-link {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 14px;
+        }
+
+        .login-link a {
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                max-width: 100%;
+            }
+        }
+
+        .error {
+            color: var(--error-color);
+            font-size: 14px;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>註冊新帳號</h1>
+        </div>
+        <div class="form-container">
+            <form id="createUserForm">
+                <div class="form-group">
+                    <i class="fas fa-user"></i>
+                    <input type="text" id="account" placeholder="帳號" required>
+                    <div id="accountError" class="error"></div>
+                </div>
+                <div class="form-group">
+                    <i class="fas fa-lock"></i>
+                    <input type="password" id="password" placeholder="密碼" required>
+                </div>
+                <div class="form-group">
+                    <i class="fas fa-lock"></i>
+                    <input type="password" id="confirmPassword" placeholder="確認密碼" required>
+                    <div id="passwordError" class="error"></div>
+                </div>
+                <div class="form-group">
+                    <i class="fas fa-envelope"></i>
+                    <input type="email" id="email" placeholder="電子郵件" required>
+                </div>
+                <div class="form-group">
+                    <i class="fas fa-phone"></i>
+                    <input type="text" id="phone" placeholder="電話號碼">
+                </div>
+                <button type="submit">註冊</button>
+            </form>
+            <div class="login-link">
+                已經有帳號？<a href="login.html">登入</a>
+            </div>
+        </div>
+    </div>
+    <script>
+    $(document).ready(function() {
+        $("#createUserForm").submit(function(event) {
+            event.preventDefault();
+            const password = $("#password").val();
+            const confirmPassword = $("#confirmPassword").val();
+            if (password !== confirmPassword) {
+                $("#passwordError").text("密碼與確認密碼不一致");
+                return;
+            } else {
+                $("#passwordError").text("");
+            }
+
+            const user = {
+                account: $("#account").val(),
+                password: password,
+                email: $("#email").val(),
+                phone: $("#phone").val(),
+                role: "會員"  // 默認角色設置為會員
+            };
+
+            $.ajax({
+                type: "POST",
+                url: "/users",
+                contentType: "application/json",
+                data: JSON.stringify(user),
+                success: function(response) {
+                    alert("用戶創建成功！");
+                    $("#createUserForm")[0].reset();
+                },
+                error: function(xhr, status, error) {
+                    if (xhr.status === 400) {
+//                         alert("創建用戶失敗：" + xhr.responseText);
+                        if (xhr.responseText.includes("帳號已存在")) {
+                            $("#accountError").text("帳號已存在");
+                        } else {
+                            $("#accountError").text("");
+                        }
+                    } else {
+                        alert("創建用戶失敗：未知錯誤");
+                    }
+                }
+            });
+        });
+    });
+    </script>
+</body>
+</html>
